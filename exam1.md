@@ -210,8 +210,8 @@ Here's an example for a dispatch table with sparse cases. ie: there are some mis
 ```
 dispatch_table:
   .byte #((case_0 - dispatch_table) / 2)
+  .byte #((case_1 - dispatch_table) / 2)
   .byte #((default - dispatch_table) / 2)
-  .byte #((case_2 - dispatch_table) / 2)
   .byte #((case_3 - dispatch_table) / 2)
 case_0:
   @ do stuff
@@ -225,9 +225,11 @@ default:
 
 A few interesting things to note about the example are:
 
-* The contents of the entries in the dispatch table are the distance (offset) from the `dispatch_table` address. This makes sense because we know the base address so repeating that information in every entry would be wasteful.
+  * The contents of the entries in the dispatch table are the distance (offset) from the `dispatch_table` address. This makes sense because we know the base address so repeating that information in every entry would be wasteful.
 
-* In a similar spirit to the previous detail. The offset is divided by two because ARM requires the LSB of branch address to be set to 1. Explicitly setting the bit to one every time would be wasteful so it is just implicit in the instruction.
+  * In a similar spirit to the previous detail. The offset is divided by two because ARM requires the LSB of branch address to be set to 1. Explicitly setting the bit to one every time would be wasteful so it is just implicit in the instruction.
+
+  * The missing case_2 is still filled in with the default case. This action makes sense because leaving the case out would shift the index of the following cases down by 1.
 
 [1]: http://www.st.com/content/ccc/resource/technical/document/programming_manual/group0/78/47/33/dd/30/37/4c/66/DM00237416/files/DM00237416.pdf/jcr:content/translations/en.DM00237416.pdf#[{%22num%22%3A1151%2C%22gen%22%3A0}%2C{%22name%22%3A%22XYZ%22}%2C67%2C700%2Cnull]
 
