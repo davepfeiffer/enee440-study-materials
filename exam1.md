@@ -169,6 +169,66 @@ So `pop {r7,pc}` will first put the old frame pointer value back into r7, then p
 
 There are many ways to set up and clean up a function that adhere to the AAPCS. So one size does not fit all. It is important to understand what you can and cannot get away with in function prologue and epilogues.
 
+## ARM Architecture
+
+### Fun (and important) facts about ARM's architecture
+
+- Little Endian: Byte order is least significant first.
+
+- Full Descending Stack: The stack starts at a high address and decreases as you push to it.
+
+- Thumb function calls must have the lsb of their address set to 1 (accomplished with the .thumb_func assembler directive).
+
+- Single address space (Von Neumann).
+
+- Interrupt vectors are at the top of the address space.
+
+- GPIO and other peripherals are memory mapped (aka they are just a place in memory).
+
+- On reset the program counter is initialized to a specific address (the boot vector). The boot vector loads the program text into ram (from flash), initializes the data section, initializes the interrupt table, and jumps into the entry point of the program.
+
+### Op-Code Details
+
+- `mov rn,=literal`
+
+Stores the literal in a literal pool (.ltorg assembler directive) and loads it into rn relative to the program counter. ex: `mov rn,[pc,#relative_offset]`
+
+- `ldr rd,[rs,#off]!`
+
+Pre-increments the source register (rs) and loads from the address stored in it.
+
+- `ldr rd,[rs],#off`
+
+Loads from the address stored in the source register (rs) then increments its contents by off.
+
+- `tbb rt,ro`
+
+Table branch byte requires some memory set up before use. The table register (rt) points to the dispatch table, the offset register (ro) specifies which entry in the table to branch to.
+
+Here's an example for a dispatch table with sparse cases. ie: there are some missing cases in between.
+
+```
+dispatch_table:
+  .byte #((case_0 - dispatch_table) / 2)
+  .byte #((default - dispatch_table) / 2)
+  .byte #((case_2 - dispatch_table) / 2)
+  .byte #((case_3 - dispatch_table) / 2)
+case_0:
+  @ do stuff
+case_1:
+  @ do stuff
+case_3:
+  @ do stuff
+default:
+  @ do stuff
+```
+
+A few interesting things to note about the example are:
+
+* The contents of the entries in the dispatch table are the distance (offset) from the `dispatch_table` address. This makes sense because we know the base address so repeating that information in every entry would be wasteful.
+
+* In a similar spirit to the previous detail. The offset is divided by two because ARM requires the LSB of branch address to be set to 1. Explicitly setting the bit to one every time would be wasteful so it is just implicit in the instruction.
+
 [1]: http://www.st.com/content/ccc/resource/technical/document/programming_manual/group0/78/47/33/dd/30/37/4c/66/DM00237416/files/DM00237416.pdf/jcr:content/translations/en.DM00237416.pdf#[{%22num%22%3A1151%2C%22gen%22%3A0}%2C{%22name%22%3A%22XYZ%22}%2C67%2C700%2Cnull]
 
 [2]: infocenter.arm.com/help/topic/com.arm.doc.ihi0042f/IHI0042F_aapcs.pdf
