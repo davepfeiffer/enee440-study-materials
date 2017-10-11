@@ -120,6 +120,55 @@ After the prologue, the stack will look like:
 ----------- <- y (frame pointer)
 ```
 
+### Epilogue
+
+The epilogue only needs to restore callee save registers, clean up the stack, and return to the function that called it.
+
+#### Example
+
+```
+foo:
+  @ Prologue
+  push  {r0, r1, r2, r7, lr}    @ save arguments, frame-pointer, and link reg
+  sub   sp,#12                  @ create local vars and pad for 8 byte alignment
+  add   r7,sp,#0                @ create new frame-pointer
+
+  @ Body
+  @ Do Stuff. Probably calling a function before finishing with r0-3.
+
+  @ Epilogue
+  add   sp,#24                  @ throw away local vars and r0, r1, r2
+  pop   {r7, pc}                @ restore callee save and return from subroutine
+```
+
+After the add instruction the stack will look like:
+
+```
+-----------
+| lr      |
+-----------
+| r7      |
+----------- <- stack pointer
+| r2      |
+-----------
+| r1      |
+-----------
+| r0      |
+-----------
+| padding |
+-----------
+| x       |
+-----------
+| y       |
+-----------
+```
+
+So `pop {r7,pc}` will first put the old frame pointer value back into r7, then put the link register directly into the program counter (same as `pop {r7,lr}` followed by `bx lr`). 
+
+### Note
+
+There are many ways to set up and clean up a function that adhere to the AAPCS. So one size does not fit all. It is important to understand what you can and cannot get away with in function prologue and epilogues.
+
 [1]: http://www.st.com/content/ccc/resource/technical/document/programming_manual/group0/78/47/33/dd/30/37/4c/66/DM00237416/files/DM00237416.pdf/jcr:content/translations/en.DM00237416.pdf#[{%22num%22%3A1151%2C%22gen%22%3A0}%2C{%22name%22%3A%22XYZ%22}%2C67%2C700%2Cnull]
 
 [2]: infocenter.arm.com/help/topic/com.arm.doc.ihi0042f/IHI0042F_aapcs.pdf
