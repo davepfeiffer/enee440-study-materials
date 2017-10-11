@@ -65,7 +65,7 @@ In this class we only care about a subset of the [AAPCS][2]. The subset that we 
 
 ### Registers
 
-- When arguments are passed to procedures (functions) the are stored in r0-r3 from left to right. There are ways to pass more than 4 arguments but we don't care.
+- When arguments are passed to procedures (functions) the are stored in r0-r3 from left to right. There are ways to pass more than 4 arguments but for the purposes of exam 1 we don't care.
 
 - Registers 0-3 are _caller save_. ie: if you want the to keep the values stored in r0-r3 after calling a procedure, they need to be saved elsewhere.
 
@@ -75,8 +75,51 @@ In this class we only care about a subset of the [AAPCS][2]. The subset that we 
 
 ### Prologue
 
+The contents of the prologue (what you need to do to set up), change depending on whether or not you will be calling other functions, using the stack, and/or using r4-r11.
 
+If you are using the stack, you will most likely want to set up a new frame pointer (in r7). Because r7 is _callee save_ it will need to be pushed onto the stack and restored in the epilogue.
+
+If you are calling other functions, you will __always__ want to save the link register so you can return to the function that called you.
+
+_note about stack alignment:_ The stack must be 8 byte aligned at each __external interface__ (call function or return from function). Otherwise it must be word aligned (4 bytes) [3][3].
+
+#### Example
+
+For a non-leaf function (it calls other functions) with 3 arguments and two local variables the prologue would look like the following:
+
+```
+foo:
+  @ Prologue
+  push  {r0, r1, r2, r7, lr}    @ save arguments, frame-pointer, and link reg
+  sub   sp,#12                  @ create local vars and pad for 8 byte alignment
+  add   r7,sp,#0                @ create new frame-pointer
+  @ Body
+```
+
+After the prologue, the stack will look like:
+
+```
+-----------
+| lr      |
+-----------
+| r7      |
+-----------
+| r2      |
+----------- <- arg2 (FP + 20)
+| r1      |
+----------- <- arg1 (FP + 16)
+| r0      |
+----------- <- arg0 (FP + 12)
+| padding |
+-----------
+| x       |
+----------- <- x (FP + 4)
+| y       |
+----------- <- y (frame pointer)
+```
 
 [1]: http://www.st.com/content/ccc/resource/technical/document/programming_manual/group0/78/47/33/dd/30/37/4c/66/DM00237416/files/DM00237416.pdf/jcr:content/translations/en.DM00237416.pdf#[{%22num%22%3A1151%2C%22gen%22%3A0}%2C{%22name%22%3A%22XYZ%22}%2C67%2C700%2Cnull]
 
 [2]: infocenter.arm.com/help/topic/com.arm.doc.ihi0042f/IHI0042F_aapcs.pdf
+
+[3]: http://infocenter.arm.com/help/topic/com.arm.doc.faqs/ka4127.html
