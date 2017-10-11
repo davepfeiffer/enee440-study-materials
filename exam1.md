@@ -10,11 +10,11 @@
 
 - [AAPCS (ARM Architecture Procedure Call Standard)][]
 
-- ARM Architecture
+- [ARM Architecture][]
 
-- GNU Assembler Macros
+- [GNU Assembler Macros][]
 
-- GNU Assembler Directives
+- [GNU Assembler Directives][]
 
 ## C to Assembly and Assembly to C
 
@@ -171,6 +171,8 @@ There are many ways to set up and clean up a function that adhere to the AAPCS. 
 
 ## ARM Architecture
 
+[ARM Architecture]: https://github.com/davepfeiffer/enee440-study-materials/blob/master/exam1.md#arm-architecture
+
 ### Fun (and important) facts about ARM's architecture
 
 - Little Endian: Byte order is least significant first.
@@ -225,11 +227,61 @@ default:
 
 A few interesting things to note about the example are:
 
-  * The contents of the entries in the dispatch table are the distance (offset) from the `dispatch_table` address. This makes sense because we know the base address so repeating that information in every entry would be wasteful.
+  1. The contents of the entries in the dispatch table are the distance (offset) from the `dispatch_table` address. This makes sense because we know the base address so repeating that information in every entry would be wasteful.
 
-  * In a similar spirit to the previous detail. The offset is divided by two because ARM requires the LSB of branch address to be set to 1. Explicitly setting the bit to one every time would be wasteful so it is just implicit in the instruction.
+  2. In a similar spirit to the previous detail. The offset is divided by two because ARM requires the LSB of branch address to be set to 1. Explicitly setting the bit to one every time would be wasteful so it is just implicit in the instruction.
 
-  * The missing case_2 is still filled in with the default case. This action makes sense because leaving the case out would shift the index of the following cases down by 1.
+  3. The missing case_2 is still filled in with the default case. This action makes sense because leaving the case out would shift the index of the following cases down by 1.
+
+## GNU Assembler Macros
+
+[GNU Assembler Macros]: https://github.com/davepfeiffer/enee440-study-materials/blob/master/exam1.md#gnu-assembler-macros
+
+GNU Assembler macros are slightly more powerful than pure text replacement. The support conditional replacement and recursion. Macros take the following form:
+
+```
+.macro MACRO_NAME arg1,arg2,..argN
+  @ do stuff
+.endm
+```
+
+Conditionals take the following form:
+
+```
+.if <logical_expression>
+  @ the assembler will do this stuff
+.else
+  @ the assembler will do this stuff
+.endif
+```
+
+The logical expression is true if it is non-zero.
+
+_note:_ Logical expressions are __not__ register values. Those are only known at runtime and therefore cannot be used at assembly time.
+
+Example:
+
+```
+.macro SIMPLE_INC_IF cond, t, f
+  .if \cond
+    add   \t,#1
+  .else
+    add   \f,#1
+  .endif
+.endm
+```
+
+- `SIMPLE_INC_IF 0, r0, r1` will translate into `add r1,#1`
+
+- `SIMPLE_INC_IF 123, r0, r1` will translate into `add r0,#1`
+
+- `SIMPLE_INC_IF r0, r1, r2` will not assemble.
+
+## GNU Assembler Directives
+
+[GNU Assembler Directives]: https://github.com/davepfeiffer/enee440-study-materials/blob/master/exam1.md#gnu-assembler-directives
+
+This [cheat-sheet](http://web.mit.edu/gnu/doc/html/as_7.html) will be more complete than whatever I would have written.
 
 [1]: http://www.st.com/content/ccc/resource/technical/document/programming_manual/group0/78/47/33/dd/30/37/4c/66/DM00237416/files/DM00237416.pdf/jcr:content/translations/en.DM00237416.pdf#[{%22num%22%3A1151%2C%22gen%22%3A0}%2C{%22name%22%3A%22XYZ%22}%2C67%2C700%2Cnull]
 
